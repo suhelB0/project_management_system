@@ -1,13 +1,13 @@
 package com.example.projectmanagement.dto;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class ProjectResponse {
     private Integer projectId;
     private String projectName;
     private ProjectTypeResponse projectType;
     private ProjectSubTypeResponse projectSubType;
-    private Timestamp projectCreationTimestamp;
+    private LocalDateTime projectCreationTimestamp;
 
     public Integer getProjectId() {
         return projectId;
@@ -41,11 +41,11 @@ public class ProjectResponse {
         this.projectSubType = projectSubType;
     }
 
-    public Timestamp getProjectCreationTimestamp() {
+    public LocalDateTime getProjectCreationTimestamp() {
         return projectCreationTimestamp;
     }
 
-    public void setProjectCreationTimestamp(Timestamp projectCreationTimestamp) {
+    public void setProjectCreationTimestamp(LocalDateTime projectCreationTimestamp) {
         this.projectCreationTimestamp = projectCreationTimestamp;
     }
 }

@@ -3,7 +3,7 @@ package com.example.projectmanagement.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Entity
 public class Project {
@@ -13,17 +13,17 @@ public class Project {
 
     private String projectName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_type_id",  nullable = false)
     private ProjectType projectType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "project_subtype_id", nullable = false)
     private ProjectSubType projectSubType;
 
     @CreationTimestamp
     @Column(updatable = false)
-    private Timestamp projectCreationTimestamp;
+    private LocalDateTime projectCreationTimestamp;
 
     public Integer getProjectId() {
         return projectId;
@@ -57,11 +57,11 @@ public class Project {
         this.projectSubType = projectSubType;
     }
 
-    public Timestamp getProjectCreationTimestamp() {
+    public LocalDateTime getProjectCreationTimestamp() {
         return projectCreationTimestamp;
     }
 
-    public void setProjectCreationTimestamp(Timestamp projectCreationTimestamp) {
+    public void setProjectCreationTimestamp(LocalDateTime projectCreationTimestamp) {
         this.projectCreationTimestamp = projectCreationTimestamp;
     }
 }
