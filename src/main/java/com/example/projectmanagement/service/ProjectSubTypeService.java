@@ -8,8 +8,8 @@ import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectSubTypeRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProjectSubTypeService {
@@ -33,12 +33,19 @@ public class ProjectSubTypeService {
     }
 
     public List<ProjectSubTypeResponse> getAllProjectSubType() {
-        return projectSubTypeRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        List<ProjectSubType> projectSubTypes = projectSubTypeRepository.findAll();
+        List<ProjectSubTypeResponse> projectSubTypeResponses = new ArrayList<>();
+        for (ProjectSubType projectSubType : projectSubTypes) {
+            projectSubTypeResponses.add(toResponse(projectSubType));
+        }
+
+        return projectSubTypeResponses;
     }
 
     public ProjectSubTypeResponse getProjectSubTypeById(Integer id) {
-        return projectSubTypeRepository.findById(id).map(this::toResponse)
+        ProjectSubType projectSubType = projectSubTypeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project Sub-Type not found with id " + id));
+        return toResponse(projectSubType);
     }
 
     private ProjectSubTypeResponse toResponse(ProjectSubType saved) {

@@ -12,10 +12,11 @@ import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectRepository;
 import com.example.projectmanagement.repository.ProjectSubTypeRepository;
 import com.example.projectmanagement.repository.ProjectTypeRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -50,24 +51,45 @@ public class ProjectService {
     }
 
     public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        List<Project> projects = projectRepository.findAll();
+        List<ProjectResponse> projectResponses = new ArrayList<>();
+
+        for (Project project : projects) {
+            projectResponses.add(toResponse(project));
+        }
+        return projectResponses;
     }
 
     public ProjectResponse getProjectById(Integer id) {
-        return projectRepository.findById(id).map(this::toResponse)
+        Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + id));
+        return toResponse(project);
     }
 
     public List<ProjectResponse> getProjectsByType(Integer projectTypeId) {
         ProjectType type = projectTypeRepository.findById(projectTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectType not found with id " + projectTypeId));
-        return projectRepository.findAllByProjectType(type).stream().map(this::toResponse).collect(Collectors.toList());
+
+        List<Project> projects = projectRepository.findAllByProjectType(type);
+        List<ProjectResponse> projectResponses = new ArrayList<>();
+
+        for (Project project : projects) {
+            projectResponses.add(toResponse(project));
+        }
+        return projectResponses;
     }
 
     public List<ProjectResponse> getProjectsBySubType(Integer projectSubTypeId) {
         ProjectSubType subType = projectSubTypeRepository.findById(projectSubTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectSubType not found with id " + projectSubTypeId));
-        return projectRepository.findAllByProjectSubType(subType).stream().map(this::toResponse).collect(Collectors.toList());
+
+        List<Project> projects = projectRepository.findAllByProjectSubType(subType);
+        List<ProjectResponse> projectResponses = new ArrayList<>();
+
+        for (Project project : projects) {
+            projectResponses.add(toResponse(project));
+        }
+        return projectResponses;
     }
 
     public void deleteProjectById(Integer projectId) {
@@ -77,6 +99,7 @@ public class ProjectService {
         projectRepository.deleteById(projectId);
     }
 
+    @Transactional
     public void deleteProjectByName(String projectName) {
         projectRepository.findByProjectName(projectName)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with name " + projectName));

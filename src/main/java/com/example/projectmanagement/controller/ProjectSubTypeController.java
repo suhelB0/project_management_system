@@ -2,7 +2,6 @@ package com.example.projectmanagement.controller;
 
 import com.example.projectmanagement.dto.ProjectSubTypeRequest;
 import com.example.projectmanagement.dto.ProjectSubTypeResponse;
-import com.example.projectmanagement.entity.ProjectSubType;
 import com.example.projectmanagement.service.ProjectSubTypeService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;

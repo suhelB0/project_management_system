@@ -55,28 +55,22 @@ public class ProjectController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping
-    public ResponseEntity<Void> deleteProject(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Integer typeId,
-            @RequestParam(required = false) Integer subTypeId) {
+    @DeleteMapping("/name/{projectName}")
+    public ResponseEntity<Void> deleteByProjectName(@PathVariable String projectName) {
+        projectService.deleteProjectByName(projectName);
+        return ResponseEntity.noContent().build();
+    }
 
-        if (name != null) {
-            projectService.deleteProjectByName(name);
-            return ResponseEntity.noContent().build();
-        }
+    @DeleteMapping("/byType/{typeId}")
+    public ResponseEntity<Void> deleteByType(@PathVariable Integer typeId) {
+        projectService.deleteProjectByTypeId(typeId);
+        return ResponseEntity.noContent().build();
+    }
 
-        if (typeId != null) {
-            projectService.deleteProjectByTypeId(typeId);
-            return ResponseEntity.noContent().build();
-        }
-
-        if (subTypeId != null) {
-            projectService.deleteProjectBySubTypeId(subTypeId);
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.badRequest().build();
+    @DeleteMapping("/bySubType/{subTypeId}")
+    public ResponseEntity<Void> deleteBySubType(@PathVariable Integer subTypeId) {
+        projectService.deleteProjectBySubTypeId(subTypeId);
+        return ResponseEntity.noContent().build();
     }
 
 }
