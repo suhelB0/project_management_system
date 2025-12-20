@@ -3,7 +3,6 @@ package com.example.projectmanagement.service;
 import com.example.projectmanagement.dto.ProjectTypeRequest;
 import com.example.projectmanagement.dto.ProjectTypeResponse;
 import com.example.projectmanagement.entity.ProjectType;
-import com.example.projectmanagement.exception.DuplicateResourceException;
 import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectTypeRepository;
 import org.springframework.stereotype.Service;
@@ -21,10 +20,6 @@ public class ProjectTypeService {
     }
 
     public ProjectTypeResponse createProjectType(ProjectTypeRequest request) {
-        projectTypeRepository.findByProjectTypeName(request.getProjectTypeName()).ifPresent(p -> {
-            throw new DuplicateResourceException("Project type with name '" + request.getProjectTypeName() + "' already exists");
-        });
-
         ProjectType projectType = new ProjectType();
         projectType.setProjectTypeName(request.getProjectTypeName());
 

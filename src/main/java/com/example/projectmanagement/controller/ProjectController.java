@@ -2,7 +2,11 @@ package com.example.projectmanagement.controller;
 
 import com.example.projectmanagement.dto.ProjectRequest;
 import com.example.projectmanagement.dto.ProjectResponse;
+import com.example.projectmanagement.enums.ProjectCriteria;
 import com.example.projectmanagement.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,52 +29,63 @@ public class ProjectController {
     }
 
     @GetMapping
-    public List<ProjectResponse> getAllProjects() {
+    public List<ProjectResponse> findAllProjects() {
         return projectService.getAllProjects();
     }
 
-    @GetMapping("/{id}")
-    public ProjectResponse getById(@PathVariable Integer id) {
-        return projectService.getProjectById(id);
+    @GetMapping("/search")
+    @Operation(
+            summary = "Get projects by dynamic criteria",
+            description = "Provide criteria type (byWhich) and its value to filter projects"
+    )
+    public ResponseEntity<List<ProjectResponse>> getProjectsByCriteria(
+            @Parameter(
+                    description = "Select search criteria",
+                    required = true,
+                    schema = @Schema(implementation = ProjectCriteria.class)
+            )
+            @RequestParam ProjectCriteria byWhich,
+
+            @Parameter(
+                    description = "Value for selected criteria",
+                    required = true
+            )
+            @RequestParam String value) {
+
+        List<ProjectResponse> projects = projectService.getProjectsByCriteria(byWhich, value);
+        return ResponseEntity.ok(projects);
     }
 
-    @GetMapping("/byType/{typeId}")
-    public List<ProjectResponse> getByType(@PathVariable Integer typeId) {
-        return projectService.getProjectsByType(typeId);
-    }
-
-    @GetMapping("/bySubType/{subTypeId}")
-    public List<ProjectResponse> getBySubType(@PathVariable Integer subTypeId) {
-        return projectService.getProjectsBySubType(subTypeId);
-    }
 
     @PutMapping("/{id}")
     public ProjectResponse updateProject(@PathVariable Integer id, @Valid @RequestBody ProjectRequest request) {
         return projectService.updateProject(id, request);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
-        projectService.deleteProjectById(id);
-        return ResponseEntity.noContent().build();
-    }
+    @DeleteMapping("/delete")
+    @Operation(
+            summary = "Delete project",
+            description = "Select deletion criteria from dropdown and provide corresponding value"
+    )
+    public ResponseEntity<String> deleteProject(
+            @Parameter(
+                    description = "Select deletion criteria",
+                    required = true,
+                    schema = @Schema(
+                            implementation = ProjectCriteria.class,
+                            allowableValues = {"ID", "NAME", "TYPE_ID", "SUBTYPE_ID"}
+                    )
+            )
+            @RequestParam ProjectCriteria criteria,
 
-    @DeleteMapping("/name/{projectName}")
-    public ResponseEntity<Void> deleteByProjectName(@PathVariable String projectName) {
-        projectService.deleteProjectByName(projectName);
-        return ResponseEntity.noContent().build();
-    }
+            @Parameter(
+                    description = "Value for selected criteria",
+                    required = true
+            )
+            @RequestParam String value) {
 
-    @DeleteMapping("/byType/{typeId}")
-    public ResponseEntity<Void> deleteByType(@PathVariable Integer typeId) {
-        projectService.deleteProjectByTypeId(typeId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/bySubType/{subTypeId}")
-    public ResponseEntity<Void> deleteBySubType(@PathVariable Integer subTypeId) {
-        projectService.deleteProjectBySubTypeId(subTypeId);
-        return ResponseEntity.noContent().build();
+        int deletedCount = projectService.deleteProjectByCriteria(criteria, value);
+        return ResponseEntity.ok("Deleted " + deletedCount + " project(s).");
     }
 
 }

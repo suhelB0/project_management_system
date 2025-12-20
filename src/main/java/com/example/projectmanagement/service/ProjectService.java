@@ -7,12 +7,11 @@ import com.example.projectmanagement.dto.ProjectTypeResponse;
 import com.example.projectmanagement.entity.Project;
 import com.example.projectmanagement.entity.ProjectSubType;
 import com.example.projectmanagement.entity.ProjectType;
-import com.example.projectmanagement.exception.DuplicateResourceException;
+import com.example.projectmanagement.enums.ProjectCriteria;
 import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectRepository;
 import com.example.projectmanagement.repository.ProjectSubTypeRepository;
 import com.example.projectmanagement.repository.ProjectTypeRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,10 +30,6 @@ public class ProjectService {
     }
 
     public ProjectResponse createProject(ProjectRequest request) {
-        projectRepository.findByProjectName(request.getProjectName()).ifPresent(p -> {
-            throw new DuplicateResourceException("Project with name '" + request.getProjectName() + "' already exists");
-        });
-
         ProjectType type = projectTypeRepository.findById(request.getProjectTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectType not found with id " + request.getProjectTypeId()));
 
@@ -60,78 +55,29 @@ public class ProjectService {
         return projectResponses;
     }
 
-    public ProjectResponse getProjectById(Integer id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + id));
-        return toResponse(project);
-    }
+    public List<ProjectResponse> getProjectsByCriteria(ProjectCriteria criteria, String value) {
+        List<Project> projects = projectRepository.findByCriteria(criteria, value);
 
-    public List<ProjectResponse> getProjectsByType(Integer projectTypeId) {
-        ProjectType type = projectTypeRepository.findById(projectTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("ProjectType not found with id " + projectTypeId));
+        if (projects.isEmpty()) {
+            throw new ResourceNotFoundException("Project not found");
+        }
 
-        List<Project> projects = projectRepository.findAllByProjectType(type);
         List<ProjectResponse> projectResponses = new ArrayList<>();
-
         for (Project project : projects) {
             projectResponses.add(toResponse(project));
         }
         return projectResponses;
     }
 
-    public List<ProjectResponse> getProjectsBySubType(Integer projectSubTypeId) {
-        ProjectSubType subType = projectSubTypeRepository.findById(projectSubTypeId)
-                .orElseThrow(() -> new ResourceNotFoundException("ProjectSubType not found with id " + projectSubTypeId));
-
-        List<Project> projects = projectRepository.findAllByProjectSubType(subType);
-        List<ProjectResponse> projectResponses = new ArrayList<>();
-
-        for (Project project : projects) {
-            projectResponses.add(toResponse(project));
-        }
-        return projectResponses;
-    }
-
-    public void deleteProjectById(Integer projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ResourceNotFoundException("Project not found with id " + projectId);
-        }
-        projectRepository.deleteById(projectId);
-    }
-
-    @Transactional
-    public void deleteProjectByName(String projectName) {
-        projectRepository.findByProjectName(projectName)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with name " + projectName));
-        projectRepository.deleteByProjectName(projectName);
-    }
-
-    public void deleteProjectByTypeId(Integer typeId) {
-        List<Project> projects = projectRepository.findByProjectType_ProjectTypeId(typeId);
-        if (projects.isEmpty()) {
-            throw new ResourceNotFoundException("No projects found with projectTypeId: " + typeId);
-        }
-        projectRepository.deleteAll(projects);
-    }
-
-    public void deleteProjectBySubTypeId(Integer subTypeId) {
-        List<Project> projects = projectRepository.findByProjectSubType_ProjectSubTypeId(subTypeId);
-        if (projects.isEmpty()) {
-            throw new ResourceNotFoundException("No projects found with projectSubTypeId: " + subTypeId);
-        }
-        projectRepository.deleteAll(projects);
+    public int deleteProjectByCriteria(ProjectCriteria criteria, String value) {
+        return projectRepository.deleteByCriteria(criteria, value);
     }
 
     public ProjectResponse updateProject(Integer projectId, ProjectRequest request) {
         Project existing = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
 
-        if (!existing.getProjectName().equalsIgnoreCase(request.getProjectName())) {
-            projectRepository.findByProjectName(request.getProjectName()).ifPresent(p -> {
-                throw new DuplicateResourceException("Project with name '" + request.getProjectName() + "' already exists");
-            });
-            existing.setProjectName(request.getProjectName());
-        }
+        existing.setProjectName(request.getProjectName());
 
         ProjectType type = projectTypeRepository.findById(request.getProjectTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectType not found with id " + request.getProjectTypeId()));

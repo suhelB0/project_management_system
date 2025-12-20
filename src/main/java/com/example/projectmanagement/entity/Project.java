@@ -11,6 +11,7 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer projectId;
 
+    @Column(nullable = false, unique = true)
     private String projectName;
 
     @ManyToOne(fetch = FetchType.EAGER)

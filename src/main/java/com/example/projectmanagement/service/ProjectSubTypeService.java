@@ -3,7 +3,6 @@ package com.example.projectmanagement.service;
 import com.example.projectmanagement.dto.ProjectSubTypeRequest;
 import com.example.projectmanagement.dto.ProjectSubTypeResponse;
 import com.example.projectmanagement.entity.ProjectSubType;
-import com.example.projectmanagement.exception.DuplicateResourceException;
 import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectSubTypeRepository;
 import org.springframework.stereotype.Service;
@@ -21,10 +20,6 @@ public class ProjectSubTypeService {
     }
 
     public ProjectSubTypeResponse createProjectSubType(ProjectSubTypeRequest request) {
-        projectSubTypeRepository.findByProjectSubTypeName(request.getProjectSubTypeName()).ifPresent(p ->{
-            throw new DuplicateResourceException("Project sub-type with name '" + request.getProjectSubTypeName() + "' already exists");
-        });
-
         ProjectSubType projectSubType = new ProjectSubType();
         projectSubType.setProjectSubTypeName(request.getProjectSubTypeName());
 
