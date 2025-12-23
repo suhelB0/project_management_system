@@ -3,15 +3,18 @@ package com.example.projectmanagement.controller;
 import com.example.projectmanagement.dto.ProjectRequest;
 import com.example.projectmanagement.dto.ProjectResponse;
 import com.example.projectmanagement.enums.ProjectCriteria;
+import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -25,7 +28,7 @@ public class ProjectController {
 
     @PostMapping
     public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request) {
-        return projectService.createProject(request);
+            return projectService.createProject(request);
     }
 
     @GetMapping

@@ -22,6 +22,11 @@ public class Project {
     @JoinColumn(name = "project_subtype_id", nullable = false)
     private ProjectSubType projectSubType;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime projectCreationTimestamp;
@@ -56,6 +61,14 @@ public class Project {
 
     public void setProjectSubType(ProjectSubType projectSubType) {
         this.projectSubType = projectSubType;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 
     public LocalDateTime getProjectCreationTimestamp() {

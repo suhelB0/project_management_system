@@ -1,4 +1,10 @@
 package com.example.projectmanagement.repository;
 
-public interface RoleRepository {
+import com.example.projectmanagement.entity.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface RoleRepository extends JpaRepository<Role,Integer> {
+    Optional<Role> findByRoleName(String roleName);
 }
