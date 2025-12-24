@@ -1,17 +1,20 @@
 package com.example.projectmanagement.service;
 
-import com.example.projectmanagement.dto.ProjectRequest;
-import com.example.projectmanagement.dto.ProjectResponse;
-import com.example.projectmanagement.dto.ProjectSubTypeResponse;
-import com.example.projectmanagement.dto.ProjectTypeResponse;
+import com.example.projectmanagement.dto.*;
 import com.example.projectmanagement.entity.Project;
 import com.example.projectmanagement.entity.ProjectSubType;
 import com.example.projectmanagement.entity.ProjectType;
+import com.example.projectmanagement.entity.User;
 import com.example.projectmanagement.enums.ProjectCriteria;
 import com.example.projectmanagement.exception.ResourceNotFoundException;
 import com.example.projectmanagement.repository.ProjectRepository;
 import com.example.projectmanagement.repository.ProjectSubTypeRepository;
 import com.example.projectmanagement.repository.ProjectTypeRepository;
+import com.example.projectmanagement.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,11 +25,13 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectTypeRepository projectTypeRepository;
     private final ProjectSubTypeRepository projectSubTypeRepository;
+    private final UserRepository userRepository;
 
-    public ProjectService(ProjectRepository projectRepository, ProjectTypeRepository projectTypeRepository,ProjectSubTypeRepository projectSubTypeRepository) {
+    public ProjectService(ProjectRepository projectRepository, ProjectTypeRepository projectTypeRepository, ProjectSubTypeRepository projectSubTypeRepository, UserRepository userRepository) {
         this.projectRepository = projectRepository;
         this.projectTypeRepository = projectTypeRepository;
         this.projectSubTypeRepository = projectSubTypeRepository;
+        this.userRepository = userRepository;
     }
 
     public ProjectResponse createProject(ProjectRequest request) {
@@ -36,10 +41,14 @@ public class ProjectService {
         ProjectSubType subType = projectSubTypeRepository.findById(request.getProjectSubTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectSubType not found with id " + request.getProjectSubTypeId()));
 
+        String username = getCurrentUsername();
+        User currentUser = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         Project project = new Project();
         project.setProjectName(request.getProjectName());
         project.setProjectType(type);
         project.setProjectSubType(subType);
+        project.setCreatedBy(currentUser);
 
         Project saved = projectRepository.save(project);
         return toResponse(saved);
@@ -77,6 +86,20 @@ public class ProjectService {
         Project existing = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
 
+        String username = getCurrentUsername();
+        User currentUser = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        boolean isAdmin = currentUser.getRoles().stream().anyMatch(role -> role.getRoleName().equals("ROLE_ADMIN"));
+        boolean isManager = currentUser.getRoles().stream().anyMatch(role -> role.getRoleName().equals("ROLE_MANAGER"));
+
+        if(!isAdmin){
+            if(isManager){
+                if(!existing.getCreatedBy().getId().equals(currentUser.getId())){
+                    throw new AccessDeniedException("You are not allowed to update projects");
+                }
+            }
+        }
+
         existing.setProjectName(request.getProjectName());
 
         ProjectType type = projectTypeRepository.findById(request.getProjectTypeId())
@@ -108,6 +131,17 @@ public class ProjectService {
         subTypeRes.setProjectSubTypeName(project.getProjectSubType().getProjectSubTypeName());
         response.setProjectSubType(subTypeRes);
 
+        UserSummaryResponse userRes = new UserSummaryResponse();
+        userRes.setUserId(project.getCreatedBy().getId());
+        userRes.setUsername(project.getCreatedBy().getUsername());
+        response.setCreatedBy(userRes);
+
         return response;
+    }
+
+    private String getCurrentUsername(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        return  userDetails.getUsername();
     }
 }

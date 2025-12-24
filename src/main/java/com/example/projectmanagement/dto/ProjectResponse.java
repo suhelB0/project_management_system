@@ -7,6 +7,7 @@ public class ProjectResponse {
     private String projectName;
     private ProjectTypeResponse projectType;
     private ProjectSubTypeResponse projectSubType;
+    private UserSummaryResponse createdBy;
     private LocalDateTime projectCreationTimestamp;
 
     public Integer getProjectId() {
@@ -39,6 +40,14 @@ public class ProjectResponse {
 
     public void setProjectSubType(ProjectSubTypeResponse projectSubType) {
         this.projectSubType = projectSubType;
+    }
+
+    public UserSummaryResponse getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UserSummaryResponse createdBy) {
+        this.createdBy = createdBy;
     }
 
     public LocalDateTime getProjectCreationTimestamp() {

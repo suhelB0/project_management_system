@@ -28,6 +28,18 @@ public class UserService {
         Role userRole = roleRepository.findByRoleName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
 
+        user.getRoles().add(userRole);
         return userRepository.save(user);
+    }
+
+    public void assignRoleToUser(String username, String roleName) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
+        user.getRoles().add(role);
+        userRepository.save(user);
     }
 }

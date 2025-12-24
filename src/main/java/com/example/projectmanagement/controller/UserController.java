@@ -2,13 +2,17 @@ package com.example.projectmanagement.controller;
 
 import com.example.projectmanagement.dto.LoginRequest;
 import com.example.projectmanagement.dto.RegisterRequest;
+import com.example.projectmanagement.dto.UserRoleRequest;
 import com.example.projectmanagement.entity.User;
 import com.example.projectmanagement.service.JwtService;
 import com.example.projectmanagement.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,13 +50,22 @@ public class UserController {
             security = {}
     )
     @PostMapping("/login")
-    public String login(@Valid @RequestBody LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(request.getUsername());
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try{
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+            String token = jwtService.generateToken(authentication.getName());
+            return ResponseEntity.ok(token);
         }
-        else{
-            return "User not logged in";
+        catch (BadCredentialsException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/assign-role")
+    public ResponseEntity<String> assignRole(@Valid @RequestBody UserRoleRequest request) {
+        userService.assignRoleToUser(request.getUsername(), request.getRoleName());
+        return ResponseEntity.ok("Role assigned successfully");
+    }
+
 }

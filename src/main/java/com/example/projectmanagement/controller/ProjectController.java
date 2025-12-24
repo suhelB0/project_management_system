@@ -9,12 +9,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -26,22 +29,48 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping
-    public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request) {
-            return projectService.createProject(request);
+    public ResponseEntity<?> createProject(@Valid @RequestBody ProjectRequest request) {
+        try {
+            ProjectResponse projectResponse = projectService.createProject(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(projectResponse);
+        }
+        catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Project already exists");
+        }
+        catch (CannotCreateTransactionException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database is currently unavailable");
+        }
+        catch (DataAccessResourceFailureException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database connection failed");
+        }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
-    public List<ProjectResponse> findAllProjects() {
-        return projectService.getAllProjects();
+    public ResponseEntity<?> findAllProjects() {
+        try{
+            return ResponseEntity.ok(projectService.getAllProjects());
+        }
+        catch (CannotCreateTransactionException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database is currently unavailable");
+        }
+        catch (DataAccessResourceFailureException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database connection failed");
+        }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/search")
     @Operation(
             summary = "Get projects by dynamic criteria",
             description = "Provide criteria type (byWhich) and its value to filter projects"
     )
-    public ResponseEntity<List<ProjectResponse>> getProjectsByCriteria(
+    public ResponseEntity<?> getProjectsByCriteria(
             @Parameter(
                     description = "Select search criteria",
                     required = true,
@@ -54,17 +83,46 @@ public class ProjectController {
                     required = true
             )
             @RequestParam String value) {
-
-        List<ProjectResponse> projects = projectService.getProjectsByCriteria(byWhich, value);
-        return ResponseEntity.ok(projects);
+        try{
+            List<ProjectResponse> projects = projectService.getProjectsByCriteria(byWhich, value);
+            return ResponseEntity.ok(projects);
+        }
+        catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        }
+        catch (NumberFormatException ex){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("value must be a number");
+        }
+        catch (DataAccessResourceFailureException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database connection failed");
+        }
+        catch (CannotCreateTransactionException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database is currently unavailable");
+        }
     }
 
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/{id}")
-    public ProjectResponse updateProject(@PathVariable Integer id, @Valid @RequestBody ProjectRequest request) {
-        return projectService.updateProject(id, request);
+    public ResponseEntity<?> updateProject(@PathVariable Integer id, @Valid @RequestBody ProjectRequest request) {
+        try{
+            ProjectResponse projectResponse = projectService.updateProject(id, request);
+            return ResponseEntity.ok(projectResponse);
+        }
+        catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        }
+        catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Project already exists");
+        }
+        catch (CannotCreateTransactionException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database is currently unavailable");
+        }
+        catch (DataAccessResourceFailureException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database connection failed");
+        }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete")
     @Operation(
             summary = "Delete project",
@@ -86,9 +144,19 @@ public class ProjectController {
                     required = true
             )
             @RequestParam String value) {
-
-        int deletedCount = projectService.deleteProjectByCriteria(criteria, value);
-        return ResponseEntity.ok("Deleted " + deletedCount + " project(s).");
+        try {
+            int deletedCount = projectService.deleteProjectByCriteria(criteria, value);
+            if (deletedCount == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No projects found");
+            }
+            return ResponseEntity.ok("Deleted " + deletedCount + " project(s).");
+        }
+        catch (NumberFormatException ex){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("value must be a number");
+        }
+        catch (CannotCreateTransactionException | DataAccessResourceFailureException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database connection failed");
+        }
     }
 
 }

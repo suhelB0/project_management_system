@@ -1,13 +1,11 @@
 package com.example.projectmanagement.exception;
 
-import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,13 +19,6 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<?> handleNotFound(ResourceNotFoundException ex) {
-        log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
@@ -56,22 +47,15 @@ public class GlobalExceptionHandler {
                 .body("Invalid value for parameter: " + ex.getName());
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<String> handleDBError(DataIntegrityViolationException ex) {
-        log.error("Database constraint violation", ex);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body("Database constraint violation");
-    }
-
-    @ExceptionHandler({
-            DataAccessResourceFailureException.class,
-            CannotCreateTransactionException.class,
-            JDBCConnectionException.class
-    })
-    public ResponseEntity<String> handleDatabaseDown(Exception ex) {
-        log.error("Database connection failure", ex);
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Database is currently unavailable. Please try again later.");
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<?> handleAccessDenied(Exception ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "status", 403,
+                        "error", "Forbidden",
+                        "message", "You do not have permission to access this resource"
+                ));
     }
 
     @ExceptionHandler(Exception.class)
