@@ -40,7 +40,7 @@ public class ProjectSubTypeController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping
     public ResponseEntity<?> getAllProjectSubType() {
         try{
@@ -52,7 +52,7 @@ public class ProjectSubTypeController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectSubTypeById(@PathVariable Integer id) {
         try{

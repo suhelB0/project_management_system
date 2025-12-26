@@ -40,7 +40,7 @@ public class ProjectTypeController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectTypeById(@PathVariable Integer id){
         try{
@@ -55,7 +55,7 @@ public class ProjectTypeController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping
     public ResponseEntity<?> getAllProjectType(){
         try{

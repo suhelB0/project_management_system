@@ -50,7 +50,7 @@ public class ProjectController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping
     public ResponseEntity<?> findAllProjects() {
         try{
@@ -64,7 +64,7 @@ public class ProjectController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','USER')")
     @GetMapping("/search")
     @Operation(
             summary = "Get projects by dynamic criteria",
